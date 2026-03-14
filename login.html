@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudingWell - Level Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0f172a; font-family: 'Inter', sans-serif; }
+        .neon-border { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); border: 1px solid rgba(99, 102, 241, 0.5); }
+        .gaming-input { background: #1e293b; border: 1px solid #334155; color: white; transition: 0.3s; }
+        .gaming-input:focus { border-color: #6366f1; box-shadow: 0 0 10px rgba(99, 102, 241, 0.3); outline: none; }
+    </style>
+</head>
+<body class="h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-[#111827] p-10 rounded-[2rem] neon-border">
+        <div class="text-center mb-10">
+            <h1 class="text-5xl font-black text-indigo-500 italic tracking-tighter shadow-indigo-500">StudingWell</h1>
+            <p class="text-indigo-300 text-[10px] tracking-[0.3em] font-bold mt-2 uppercase text-opacity-70">AI Math Domination</p>
+        </div>
+        
+        <h2 id="title" class="text-xl font-bold text-white mb-6 uppercase tracking-widest">System Login</h2>
+        
+        <div class="space-y-4">
+            <input type="text" id="username" placeholder="USERNAME" class="w-full p-4 gaming-input rounded-xl font-mono text-sm">
+            <input type="password" id="password" placeholder="PASSWORD" class="w-full p-4 gaming-input rounded-xl font-mono text-sm">
+            <div id="msg" class="hidden text-xs font-bold p-3 rounded-lg text-center uppercase tracking-tighter"></div>
+            <button onclick="auth()" id="btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 uppercase">Initialize Session</button>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-800 text-center">
+            <button onclick="toggle()" id="toggle-btn" class="text-indigo-400 text-xs font-bold hover:text-indigo-300 transition-colors uppercase tracking-widest">New User? Create Account</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://studingwell-com.vercel.app";
+        let isLogin = true;
+
+        function toggle() {
+            isLogin = !isLogin;
+            document.getElementById("title").innerText = isLogin ? "System Login" : "Create Identity";
+            document.getElementById("btn").innerText = isLogin ? "Initialize Session" : "Confirm Identity";
+            document.getElementById("toggle-btn").innerText = isLogin ? "New User? Create Account" : "Existing User? Sign In";
+        }
+
+        async function auth() {
+            const u = document.getElementById("username").value;
+            const p = document.getElementById("password").value;
+            const msg = document.getElementById("msg");
+            if(!u || !p) return;
+
+            msg.className = "block text-indigo-400 bg-indigo-900/30 p-3 rounded-lg text-xs font-bold mb-4 animate-pulse";
+            msg.innerText = "AUTHENTICATING...";
+
+            try {
+                const res = await fetch(`${API_BASE}/${isLogin ? 'login' : 'register'}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    if(isLogin) {
+                        localStorage.setItem("username", u);
+                        window.location.href = "index.html";
+                    } else {
+                        msg.className = "block text-green-400 bg-green-900/30 p-3 rounded-lg text-xs font-bold mb-4";
+                        msg.innerText = "IDENTITY CREATED. LOG IN NOW.";
+                        toggle();
+                    }
+                } else {
+                    msg.className = "block text-red-400 bg-red-900/30 p-3 rounded-lg text-xs font-bold mb-4";
+                    msg.innerText = data.message.toUpperCase();
+                }
+            } catch(e) {
+                msg.innerText = "SERVER OFFLINE";
+            }
+        }
+    </script>
+</body>
+</html>

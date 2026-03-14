@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudingWell - AI Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { background: #0b0f1a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .sidebar-gaming { background: #111827; border-right: 1px solid #1e293b; }
+        .chat-bubble-ai { background: #1e293b; border: 1px solid #334155; }
+        .chat-bubble-user { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+        .gaming-input-container { background: #111827; border: 1px solid #334155; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#111827] border border-indigo-500/50 p-8 rounded-[2rem] max-w-sm w-full shadow-2xl shadow-indigo-500/20">
+            <h3 class="text-xl font-black text-white mb-6 italic">USER SETTINGS</h3>
+            <div class="space-y-4">
+                <div class="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Current User</p>
+                    <p id="settings-user" class="text-indigo-400 font-mono font-bold">---</p>
+                </div>
+                <button onclick="logout()" class="w-full py-3 bg-red-900/20 text-red-500 border border-red-900/50 rounded-xl font-bold text-xs hover:bg-red-500 hover:text-white transition-all">TERMINATE SESSION</button>
+                <button onclick="closeSettings()" class="w-full py-3 bg-gray-800 text-gray-400 rounded-xl font-bold text-xs">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-64 sidebar-gaming flex flex-col p-6 shrink-0">
+        <div class="mb-10">
+            <h1 class="text-2xl font-black text-indigo-500 italic tracking-tighter">StudingWell</h1>
+            <div class="h-1 w-12 bg-indigo-500 mt-1"></div>
+        </div>
+
+        <button onclick="location.reload()" class="w-full bg-indigo-600/10 border border-indigo-600/30 text-indigo-400 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all mb-8">+ New Protocol</button>
+
+        <div class="bg-[#0b0f1a] p-4 rounded-2xl border border-gray-800 mb-6">
+            <p class="text-[9px] text-indigo-500 font-black uppercase mb-3 tracking-widest text-center">Focus Mode</p>
+            <div id="timer" class="text-3xl text-center font-mono text-white mb-4">25:00</div>
+            <button onclick="toggleTimer()" id="t-btn" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-[10px] font-black uppercase">Initialize</button>
+        </div>
+
+        <div class="mt-auto pt-4 border-t border-gray-800">
+            <button onclick="openSettings()" class="flex items-center gap-3 text-gray-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Settings
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col relative">
+        <div class="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-[#0b0f1a]/50 backdrop-blur-md">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">System Online</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="user-display" class="text-xs font-bold text-gray-400 font-mono tracking-tighter">STUDENT</span>
+                <div id="avatar" class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-black shadow-lg shadow-indigo-500/30">S</div>
+            </div>
+        </div>
+
+        <div id="chat-window" class="flex-1 overflow-y-auto p-6 md:p-12 space-y-8">
+            <div class="flex justify-start">
+                <div class="chat-bubble-ai p-5 rounded-3xl rounded-tl-none max-w-2xl text-sm leading-relaxed">
+                    <span class="text-indigo-400 font-black text-[10px] uppercase block mb-1">StudingWell AI</span>
+                    Command center initialized. Awaiting math problem input...
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8 bg-gradient-to-t from-[#0b0f1a] to-transparent">
+            <div class="max-w-4xl mx-auto gaming-input-container rounded-2xl flex items-center p-2">
+                <input type="text" id="user-input" class="flex-1 bg-transparent p-4 outline-none text-sm text-white font-medium" placeholder="TYPE PROBLEM PROTOCOL HERE..." autocomplete="off">
+                <button onclick="ask()" class="bg-indigo-600 text-white px-8 py-4 rounded-xl font-black text-xs uppercase hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20">Execute</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://studingwell-com.vercel.app";
+        let timeLeft = 25 * 60;
+        let timerId = null;
+
+        // AUTH CHECK & UI INIT
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = localStorage.getItem("username");
+            if(!user) window.location.href = "login.html";
+            
+            document.getElementById("user-display").innerText = user.toUpperCase();
+            document.getElementById("settings-user").innerText = user;
+            document.getElementById("avatar").innerText = user[0].toUpperCase();
+        });
+
+        // SETTINGS HANDLERS
+        function openSettings() { document.getElementById("settings-modal").classList.remove("hidden"); }
+        function closeSettings() { document.getElementById("settings-modal").classList.add("hidden"); }
+        function logout() { localStorage.clear(); window.location.href = "login.html"; }
+
+        // AI LOGIC (FIXED)
+        async function ask() {
+            const inp = document.getElementById("user-input");
+            const win = document.getElementById("chat-window");
+            const text = inp.value.trim();
+            if(!text) return;
+
+            // User Message
+            win.innerHTML += `
+                <div class="flex justify-end">
+                    <div class="chat-bubble-user p-5 rounded-3xl rounded-tr-none max-w-2xl text-sm shadow-xl text-white">
+                        ${text}
+                    </div>
+                </div>`;
+            
+            inp.value = "";
+            win.scrollTop = win.scrollHeight;
+
+            try {
+                const res = await fetch(`${API_BASE}/ask`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: text})
+                });
+                const data = await res.json();
+                
+                win.innerHTML += `
+                    <div class="flex justify-start">
+                        <div class="chat-bubble-ai p-5 rounded-3xl rounded-tl-none max-w-2xl text-sm leading-relaxed shadow-lg">
+                            <span class="text-indigo-400 font-black text-[10px] uppercase block mb-1">StudingWell AI</span>
+                            ${data.answer.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>`;
+                
+                if(window.MathJax) MathJax.typesetPromise();
+                win.scrollTop = win.scrollHeight;
+            } catch(e) {
+                console.error(e);
+                alert("COMMUNICATION ERROR: AI OFFLINE");
+            }
+        }
+
+        // TIMER LOGIC
+        function toggleTimer() {
+            const btn = document.getElementById("t-btn");
+            if(timerId) { clearInterval(timerId); timerId = null; btn.innerText = "INITIALIZE"; }
+            else { 
+                timerId = setInterval(() => { timeLeft--; updateT(); }, 1000); 
+                btn.innerText = "PAUSE PROTOCOL"; 
+            }
+        }
+        function updateT() {
+            const m = Math.floor(timeLeft / 60); const s = timeLeft % 60;
+            document.getElementById("timer").innerText = `${m}:${s < 10 ? '0'+s : s}`;
+        }
+
+        // ENTER KEY
+        document.getElementById("user-input").onkeypress = (e) => { if(e.key === "Enter") ask(); };
+    </script>
+</body>
+</html>

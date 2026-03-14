@@ -1,6 +1,8 @@
 {
+  "version": 2,
   "rewrites": [
     { "source": "/ask", "destination": "api/index.py" },
-    { "source": "/(login|register)_api", "destination": "api/index.py" }
+    { "source": "/login_api", "destination": "api/index.py" },
+    { "source": "/register_api", "destination": "api/index.py" }
   ]
 }

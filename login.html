@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudingWell - Level Up</title>
+    <title>StudingWell - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #0f172a; font-family: 'Inter', sans-serif; }
@@ -15,7 +15,7 @@
 <body class="h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-[#111827] p-10 rounded-[2rem] neon-border">
         <div class="text-center mb-10">
-            <h1 class="text-5xl font-black text-indigo-500 italic tracking-tighter shadow-indigo-500">StudingWell</h1>
+            <h1 class="text-5xl font-black text-indigo-500 italic tracking-tighter">StudingWell</h1>
             <p class="text-indigo-300 text-[10px] tracking-[0.3em] font-bold mt-2 uppercase text-opacity-70">AI Math Domination</p>
         </div>
         
@@ -24,8 +24,8 @@
         <div class="space-y-4">
             <input type="text" id="username" placeholder="USERNAME" class="w-full p-4 gaming-input rounded-xl font-mono text-sm">
             <input type="password" id="password" placeholder="PASSWORD" class="w-full p-4 gaming-input rounded-xl font-mono text-sm">
-            <div id="msg" class="hidden text-xs font-bold p-3 rounded-lg text-center uppercase tracking-tighter"></div>
-            <button onclick="auth()" id="btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 uppercase">Initialize Session</button>
+            <div id="msg" class="hidden text-xs font-bold p-3 rounded-lg text-center uppercase"></div>
+            <button onclick="auth()" id="btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-95 uppercase">Initialize Session</button>
         </div>
 
         <div class="mt-8 pt-6 border-t border-gray-800 text-center">
@@ -34,7 +34,7 @@
     </div>
 
     <script>
-        const API_BASE = "https://studingwell-com.vercel.app";
+        const API_BASE = "https://studingwell-com-iu2d.vercel.app";
         let isLogin = true;
 
         function toggle() {
@@ -54,12 +54,15 @@
             msg.innerText = "AUTHENTICATING...";
 
             try {
-                const res = await fetch(`${API_BASE}/${isLogin ? 'login' : 'register'}`, {
+                // Fontos: a végpontok összhangban vannak a vercel.json-nel
+                const endpoint = isLogin ? '/login_api' : '/register_api';
+                const res = await fetch(`${API_BASE}${endpoint}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({username: u, password: p})
                 });
                 const data = await res.json();
+                
                 if(res.ok) {
                     if(isLogin) {
                         localStorage.setItem("username", u);
@@ -75,6 +78,7 @@
                 }
             } catch(e) {
                 msg.innerText = "SERVER OFFLINE";
+                msg.className = "block text-red-500 p-3 text-xs";
             }
         }
     </script>

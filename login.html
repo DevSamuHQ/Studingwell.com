@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,7 +34,7 @@
     </div>
 
     <script>
-        const API_BASE = "https://studingwell-com-iu2d.vercel.app";
+        const API_BASE = window.location.origin;
         let isLogin = true;
 
         function toggle() {
@@ -54,7 +54,7 @@
             msg.innerText = "AUTHENTICATING...";
 
             try {
-                // Fontos: a végpontok összhangban vannak a vercel.json-nel
+                // Fontos: /login_api és /register_api a vercel.json rewrite-hoz
                 const endpoint = isLogin ? '/login_api' : '/register_api';
                 const res = await fetch(`${API_BASE}${endpoint}`, {
                     method: 'POST',
@@ -77,7 +77,7 @@
                     msg.innerText = data.message.toUpperCase();
                 }
             } catch(e) {
-                msg.innerText = "SERVER OFFLINE";
+                msg.innerText = "SERVER ERROR";
                 msg.className = "block text-red-500 p-3 text-xs";
             }
         }
